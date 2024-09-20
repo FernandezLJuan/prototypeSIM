@@ -8,10 +8,10 @@ Rectangle* init_grid( const int gridWidth, const int gridHeight, const int rectW
     Rectangle* grid = malloc(sizeof(Rectangle)*gridWidth*gridHeight);
     Rectangle tmp;
 
-    int nextX = 0, nextY = 0;
+    int nextX = 20, nextY = 20;
 
     for(int i = 0; i<gridWidth; i++){
-        nextX = 0;
+        nextX = 20;
         for(int j = 0; j<gridHeight; j++){
             tmp.x = nextX;
             tmp.y = nextY;
@@ -31,12 +31,13 @@ Rectangle* init_grid( const int gridWidth, const int gridHeight, const int rectW
 int main(int argc, char* argv[]){
 
     /*window and grid parameters*/
-    const int width = 800, height = 600;
+    const int width = 800, height = 800;
     int gridWidth = 8, gridHeight = 8;
 
     /*initialize the window and set it as resizable*/
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(width, height, "Test");
+    InitWindow(width, height, "Grid");
+    SetTargetFPS(60);
     
     /*get grid dimensions from arguments (if provided)*/
     if(argc>1){
@@ -47,8 +48,8 @@ int main(int argc, char* argv[]){
     }
 
     /*set rectangle dimensions based on window size and grid dimensions, grid must fill all the window*/
-    const int rectW = width/gridWidth; 
-    const int rectH = height/gridHeight;
+    const int rectW = (width/gridWidth) * 0.8; 
+    const int rectH = (height/gridHeight) * 0.8;
 
     Rectangle* grid = NULL;
     
@@ -69,13 +70,12 @@ int main(int argc, char* argv[]){
 
             EndDrawing();
         }
-        else{
-            sleep(1);
-        }
     }
 
     //free resources for grid
     free(grid);
+
+    CloseWindow();
 
     return 0;
 }
