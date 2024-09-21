@@ -3,58 +3,51 @@
 #include <unistd.h>
 #include <raylib.h>
 
-Rectangle* init_grid( const int gridWidth, const int gridHeight, const int rectW, const int rectH){
+typedef struct{
 
-    Rectangle* grid = malloc(sizeof(Rectangle)*gridWidth*gridHeight);
-    Rectangle tmp;
+    int originX, originY;
+    int width, height;
+    int cellW, cellH;
+    int rows, cols;
+    
+    Rectangle* cells;
 
-    int nextX = 20, nextY = 20;
+}Grid; /*grid structure*/
 
-    for(int i = 0; i<gridWidth; i++){
-        nextX = 20;
-        for(int j = 0; j<gridHeight; j++){
-            tmp.x = nextX;
-            tmp.y = nextY;
-            tmp.width = rectW;
-            tmp.height = rectH;
-
-            grid[i * gridWidth + j] = tmp;
-
-            nextX += rectW;
+void init_grid(Grid* g) {
+    g->cells = malloc(sizeof(Rectangle) * g->rows * g->cols);
+    int nextX, nextY;
+    
+    for (int i = 0; i < g->rows; i++) {
+        nextX = g->originX;
+        nextY = g->originY + i * g->cellH;
+        
+        for (int j = 0; j < g->cols; j++) {
+            g->cells[i * g->cols + j] = (Rectangle){nextX, nextY, g->cellW, g->cellH};
+            nextX += g->cellW;
         }
-        nextY += rectH;
     }
-
-    return grid;
 }
 
 int main(int argc, char* argv[]){
 
     /*window and grid parameters*/
     const int width = 800, height = 800;
-    int gridWidth = 8, gridHeight = 8;
 
-    /*initialize the window and set it as resizable*/
+    Grid environment = {0, 0, width, height, width / 8, height / 8, 8, 8, NULL};
+    
+    if (argc > 1) {
+        environment.rows = atoi(argv[1]);
+        environment.cols = (argc > 2) ? atoi(argv[2]) : environment.cols;
+        environment.cellW = environment.width / environment.cols;
+        environment.cellH = environment.height / environment.rows;
+    }
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(width, height, "Grid");
     SetTargetFPS(60);
-    
-    /*get grid dimensions from arguments (if provided)*/
-    if(argc>1){
-        gridWidth = atoi(argv[1]);
-        if(argc>2){
-            gridHeight = atoi(argv[2]);
-        }
-    }
 
-    /*set rectangle dimensions based on window size and grid dimensions, grid must fill all the window*/
-    const int rectW = (width/gridWidth) * 0.8; 
-    const int rectH = (height/gridHeight) * 0.8;
-
-    Rectangle* grid = NULL;
-    
-    /*fill the grid with rectangles*/
-    grid = init_grid(gridWidth, gridHeight, rectW, rectH);
+    init_grid(&environment);
 
     /*main loop*/
     while(!WindowShouldClose()){
@@ -64,8 +57,9 @@ int main(int argc, char* argv[]){
             BeginDrawing();
             ClearBackground(WHITE);
             
-            for(int i = 0; i<gridWidth*gridHeight; i++){
-                DrawRectangleLines(grid[i].x, grid[i].y, grid[i].width, grid[i].height, BLACK);
+            for(int i = 0; i<environment.width*environment.height; i++){
+                DrawRectangleLines(environment.cells[i].x, environment.cells[i].y, 
+                    environment.cells[i].width, environment.cells[i].height, BLACK);
             }
 
             EndDrawing();
@@ -73,7 +67,7 @@ int main(int argc, char* argv[]){
     }
 
     //free resources for grid
-    free(grid);
+    free(environment.cells);
 
     CloseWindow();
 
