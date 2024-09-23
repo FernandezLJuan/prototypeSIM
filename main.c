@@ -25,6 +25,35 @@ typedef struct{
 
 }Grid; /*grid structure*/
 
+void init_grid(const char* path, Grid* g){
+    /*reads configuration file and sets grid parameters*/
+
+    FILE* config = fopen(path, "r");
+
+    config_t cfg;
+    config_setting_t *settings;
+
+    config_init(&cfg);
+    if(config_read(&cfg, config) == CONFIG_FALSE){
+        /*log the parsing error to the screen*/
+        printf("ERROR PARSING COFIGURATION FILE.\n");
+        printf("Error on line %d, on file %s: \n%s\n", config_error_line(&cfg), config_error_file(&cfg), config_error_text(&cfg));
+    }
+    else{
+        /*change grid settings based on file*/
+        config_lookup_int(&cfg, "application.environment.cellDims.width", &(g->cellW));
+        config_lookup_int(&cfg, "application.environment.cellDims.height", &(g->cellH));
+        config_lookup_int(&cfg, "application.environment.pos.x",&(g->originX));
+        config_lookup_int(&cfg, "application.environment.pos.y", &(g->originY));
+        config_lookup_int(&cfg, "application.environment.rows",&(g->rows));
+        config_lookup_int(&cfg, "application.environment.cols",&(g->cols));
+
+        g->width = g->cols * g->cellW;
+        g->height = g->rows * g->cellH;
+    }
+
+}
+
 void fill_grid(Grid* g) {
     g->cells = malloc(sizeof(Cell) * g->rows * g->cols);
     int nextX, nextY;
@@ -71,29 +100,27 @@ void render_grid(Grid* g){
 
 int main(int argc, char* argv[]){
 
-    /*window and grid parameters*/
-    const int width = 800, height = 800;
+    char* filename = "default.cfg";
 
-    Grid environment = {20, 20, width / 2, height / 2, width / 8, height / 8, 8, 8, NULL};
-    
-    printf("%d, %d\n", environment.width, environment.height);
-
-    if (argc > 1) {
-        environment.rows = atoi(argv[1]);
-        environment.cols = (argc > 2) ? atoi(argv[2]) : environment.cols;
+    if(argc>1){
+        filename = argv[1];
     }
     else{
-        printf("rows = %d, cols = %d\nYou can specify this values when launching the code\n", environment.rows, environment.cols);
+        printf("Using default settings.\nCustom settings file can be provided when launching the program\n");
     }
 
-    environment.cellW = environment.width / environment.cols;
-    environment.cellH = environment.height / environment.rows;
+    /*window parameters*/
+    const int width = 800, height = 800;
 
+    /*init window*/
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     SetTraceLogLevel(LOG_NONE);
     InitWindow(width, height, "Grid");
     SetTargetFPS(60);
 
+    /*create and fill grid*/
+    Grid environment;
+    init_grid(filename, &environment);
     fill_grid(&environment);
 
     /*main loop*/
