@@ -1,4 +1,4 @@
-links := -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+links := -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -lconfig
 opts := -Wall -Wextra -Wpedantic
 compiler := clang
 
