@@ -4,6 +4,10 @@
 #include <libconfig.h>
 #include <raylib.h>
 
+//TODO: INTERACCION CON RATÓN PARA AÑADIR ROBOTS Y METAS
+
+//TODO: CONSTRUCCION DE MAPAS A PARTIR DE ARCHIVOS
+
 typedef enum {CELL_FREE, CELL_OBSTACLE, CELL_ROBOT, CELL_GOAL} cellType;
 
 typedef struct{
