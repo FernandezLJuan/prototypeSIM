@@ -3,6 +3,16 @@
 #include <unistd.h>
 #include <raylib.h>
 
+typedef enum {CELL_FREE, CELL_OBSTACLE, CELL_ROBOT, CELL_GOAL} cellType;
+
+typedef struct{
+    int id;
+    cellType type;
+
+    Rectangle cellRect;
+
+}Cell;
+
 typedef struct{
 
     int originX, originY;
@@ -10,23 +20,52 @@ typedef struct{
     int cellW, cellH;
     int rows, cols;
     
-    Rectangle* cells;
+    Cell* cells; /*array of cells on a grid*/
 
 }Grid; /*grid structure*/
 
 void init_grid(Grid* g) {
-    g->cells = malloc(sizeof(Rectangle) * g->rows * g->cols);
+    g->cells = malloc(sizeof(Cell) * g->rows * g->cols);
     int nextX, nextY;
-    
+    double obsProb = 0.5;
+    double isObstacle = 0.0;
+
     for (int i = 0; i < g->rows; i++) {
         nextX = g->originX;
         nextY = g->originY + i * g->cellH;
         
         for (int j = 0; j < g->cols; j++) {
-            g->cells[i * g->cols + j] = (Rectangle){nextX, nextY, g->cellW, g->cellH};
+            isObstacle = (rand() % 10001) / 10000.0;
+
+            g->cells[i * g->cols + j].cellRect = (Rectangle){nextX, nextY, g->cellW, g->cellH};
+
+            if(isObstacle<obsProb){
+                g->cells[i * g->cols + j].type = CELL_OBSTACLE;
+            }
+            else{
+                g->cells[i * g->cols + j].type = CELL_FREE;
+            }
             nextX += g->cellW;
         }
     }
+}
+
+void render_grid(Grid* g){
+    
+    Cell currentCell;
+
+    for(int i = 0; i<g->rows; i++){
+        for(int j = 0; j<g->cols; j++){
+            currentCell = g->cells[i * g->cols + j];
+            if(currentCell.type == CELL_FREE){
+                DrawRectangleLines(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, BLACK);
+            }
+            else if(currentCell.type == CELL_OBSTACLE){
+                DrawRectangle(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, GRAY);
+            }
+        }
+    }
+
 }
 
 int main(int argc, char* argv[]){
@@ -42,8 +81,12 @@ int main(int argc, char* argv[]){
         environment.cellW = environment.width / environment.cols;
         environment.cellH = environment.height / environment.rows;
     }
+    else{
+        printf("rows = %d, cols = %d\nYou can specify this values when launching the code\n", environment.rows, environment.cols);
+    }
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    SetTraceLogLevel(LOG_NONE);
     InitWindow(width, height, "Grid");
     SetTargetFPS(60);
 
@@ -57,10 +100,7 @@ int main(int argc, char* argv[]){
             BeginDrawing();
             ClearBackground(WHITE);
             
-            for(int i = 0; i<environment.width*environment.height; i++){
-                DrawRectangleLines(environment.cells[i].x, environment.cells[i].y, 
-                    environment.cells[i].width, environment.cells[i].height, BLACK);
-            }
+            render_grid(&environment);
 
             EndDrawing();
         }
