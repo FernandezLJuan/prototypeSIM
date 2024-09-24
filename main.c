@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include <libconfig.h>
 #include <raylib.h>
 
@@ -8,11 +9,14 @@
 
 //TODO: CONSTRUCCION DE MAPAS A PARTIR DE ARCHIVOS
 
+//TODO: ERRROR CHECKING WHEN LOADING SETTINGS
+
 typedef enum {CELL_FREE, CELL_OBSTACLE, CELL_ROBOT, CELL_GOAL} cellType;
 
 typedef struct{
     int id;
     cellType type;
+    /*TODO: CAMPO ROBOT*/
 
     Rectangle cellRect;
 
@@ -72,6 +76,7 @@ void fill_grid(Grid* g) {
             isObstacle = (rand() % 10001) / 10000.0;
 
             g->cells[i * g->cols + j].cellRect = (Rectangle){nextX, nextY, g->cellW, g->cellH};
+            g->cells[i * g->cols + j].id = i + j; /*cell id is it's position*/
 
             if(isObstacle<obsProb){
                 g->cells[i * g->cols + j].type = CELL_OBSTACLE;
@@ -96,11 +101,19 @@ void render_grid(Grid* g){
             }
             else if(currentCell.type == CELL_OBSTACLE){
                 DrawRectangle(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, GRAY);
+                DrawRectangleLines(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, BLACK);
             }
         }
     }
 
 }
+
+Cell* getNeighbours(Cell* c){
+    /*returns the neighbours to this cell in the grid*/
+
+
+}
+
 
 int main(int argc, char* argv[]){
 
