@@ -13,12 +13,13 @@
 
 typedef enum {CELL_FREE, CELL_OBSTACLE, CELL_ROBOT, CELL_GOAL} cellType;
 
-typedef struct{
+typedef struct Cell{
     int id;
     cellType type;
     /*TODO: CAMPO ROBOT*/
 
     Rectangle cellRect;
+    struct Cell* neighbors[8]; /*neighbors to this cell*/
 
 }Cell;
 
@@ -76,7 +77,7 @@ void fill_grid(Grid* g) {
             isObstacle = (rand() % 10001) / 10000.0;
 
             g->cells[i * g->cols + j].cellRect = (Rectangle){nextX, nextY, g->cellW, g->cellH};
-            g->cells[i * g->cols + j].id = i + j; /*cell id is it's position*/
+            g->cells[i * g->cols + j].id = i * g->cols + j;
 
             if(isObstacle<obsProb){
                 g->cells[i * g->cols + j].type = CELL_OBSTACLE;
@@ -108,10 +109,53 @@ void render_grid(Grid* g){
 
 }
 
+void connect_cells(Grid* g){
+    for(int i = 0; i < g->rows; i++){
+        for(int j = 0; j < g->cols; j++){
+            int idx = i * g->cols + j;
+            Cell* current = &g->cells[idx];
+
+            /*initialize all neighbors to true*/
+            for (int n = 0; n < 8; n++) {
+                current->neighbors[n] = NULL;
+            }
+
+            /*assign neighbors, checking for out-of-bounds conditions*/
+            if (i > 0) {/*has a top neighbor*/
+                current->neighbors[0] = &g->cells[(i - 1) * g->cols + j]; // Top
+                if (j > 0) {
+                    current->neighbors[1] = &g->cells[(i - 1) * g->cols + (j - 1)]; // Top-left
+                }
+                if (j < g->cols - 1) {
+                    current->neighbors[2] = &g->cells[(i - 1) * g->cols + (j + 1)]; // Top-right
+                }
+            }
+            
+            if (j > 0) {
+                current->neighbors[3] = &g->cells[i * g->cols + (j - 1)]; // Left
+            }
+            
+            if (j < g->cols - 1) {
+                current->neighbors[4] = &g->cells[i * g->cols + (j + 1)]; // Right
+            }
+
+            if (i < g->rows - 1) { // Has a bottom neighbor
+                current->neighbors[5] = &g->cells[(i + 1) * g->cols + j]; // Bottom
+                if (j > 0) {
+                    current->neighbors[6] = &g->cells[(i + 1) * g->cols + (j - 1)]; // Bottom-left
+                }
+                if (j < g->cols - 1) {
+                    current->neighbors[7] = &g->cells[(i + 1) * g->cols + (j + 1)]; // Bottom-right
+                }
+            }
+        }
+    }
+}
+
+
 Cell* getNeighbours(Cell* c){
     /*returns the neighbours to this cell in the grid*/
-
-
+    return c->neighbors;
 }
 
 
