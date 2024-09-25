@@ -13,15 +13,24 @@
 
 typedef enum {CELL_FREE, CELL_OBSTACLE, CELL_ROBOT, CELL_GOAL} cellType;
 
+struct Robot;
+struct Cell;
+
 typedef struct Cell{
     int id;
     cellType type;
-    /*TODO: CAMPO ROBOT*/
+    struct Robot* objectID;
 
-    Rectangle cellRect;
     struct Cell* neighbors[8]; /*neighbors to this cell*/
 
 }Cell;
+
+typedef struct Robot{
+
+    int id;
+    Cell* currentCell;
+
+}Robot;
 
 typedef struct{
 
@@ -30,6 +39,7 @@ typedef struct{
     int cellW, cellH;
     int rows, cols;
     
+    Rectangle* cellRects;
     Cell* cells; /*array of cells on a grid*/
 
 }Grid; /*grid structure*/
@@ -65,6 +75,8 @@ void init_grid(const char* path, Grid* g){
 
 void fill_grid(Grid* g) {
     g->cells = malloc(sizeof(Cell) * g->rows * g->cols);
+    g->cellRects = malloc(sizeof(Rectangle) * g->rows * g->cols);
+
     int nextX, nextY;
     double obsProb = 0.2;
     double isObstacle = 0.0;
@@ -76,7 +88,7 @@ void fill_grid(Grid* g) {
         for (int j = 0; j < g->cols; j++) {
             isObstacle = (rand() % 10001) / 10000.0;
 
-            g->cells[i * g->cols + j].cellRect = (Rectangle){nextX, nextY, g->cellW, g->cellH};
+            g->cellRects[i * g->cols + j] = (Rectangle){nextX, nextY, g->cellW, g->cellH};
             g->cells[i * g->cols + j].id = i * g->cols + j;
 
             if(isObstacle<obsProb){
@@ -93,16 +105,18 @@ void fill_grid(Grid* g) {
 void render_grid(Grid* g){
     
     Cell currentCell;
+    Rectangle currentRect;
 
     for(int i = 0; i<g->rows; i++){
         for(int j = 0; j<g->cols; j++){
             currentCell = g->cells[i * g->cols + j];
+            currentRect = g->cellRects[i * g->cols + j];
             if(currentCell.type == CELL_FREE){
-                DrawRectangleLines(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, BLACK);
+                DrawRectangleLines(currentRect.x, currentRect.y, currentRect.width, currentRect.height, BLACK);
             }
             else if(currentCell.type == CELL_OBSTACLE){
-                DrawRectangle(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, GRAY);
-                DrawRectangleLines(currentCell.cellRect.x, currentCell.cellRect.y, currentCell.cellRect.width, currentCell.cellRect.height, BLACK);
+                DrawRectangle(currentRect.x, currentRect.y, currentRect.width, currentRect.height, GRAY);
+                DrawRectangleLines(currentRect.x, currentRect.y, currentRect.width, currentRect.height, BLACK);
             }
         }
     }
@@ -122,12 +136,12 @@ void connect_cells(Grid* g){
 
             /*assign neighbors, checking for out-of-bounds conditions*/
             if (i > 0) {/*has a top neighbor*/
-                current->neighbors[0] = &g->cells[(i - 1) * g->cols + j]; // Top
+                current->neighbors[0] = &g->cells[(i - 1) * g->cols + j]; /*top*/
                 if (j > 0) {
-                    current->neighbors[1] = &g->cells[(i - 1) * g->cols + (j - 1)]; // Top-left
+                    current->neighbors[1] = &g->cells[(i - 1) * g->cols + (j - 1)]; /*top left*/
                 }
                 if (j < g->cols - 1) {
-                    current->neighbors[2] = &g->cells[(i - 1) * g->cols + (j + 1)]; // Top-right
+                    current->neighbors[2] = &g->cells[(i - 1) * g->cols + (j + 1)]; /*top right*/
                 }
             }
             
@@ -139,19 +153,18 @@ void connect_cells(Grid* g){
                 current->neighbors[4] = &g->cells[i * g->cols + (j + 1)]; // Right
             }
 
-            if (i < g->rows - 1) { // Has a bottom neighbor
-                current->neighbors[5] = &g->cells[(i + 1) * g->cols + j]; // Bottom
+            if (i < g->rows - 1) { /*has a bottom neighbor*/
+                current->neighbors[5] = &g->cells[(i + 1) * g->cols + j];/*bottom*/
                 if (j > 0) {
-                    current->neighbors[6] = &g->cells[(i + 1) * g->cols + (j - 1)]; // Bottom-left
+                    current->neighbors[6] = &g->cells[(i + 1) * g->cols + (j - 1)];/*bottom left*/
                 }
                 if (j < g->cols - 1) {
-                    current->neighbors[7] = &g->cells[(i + 1) * g->cols + (j + 1)]; // Bottom-right
+                    current->neighbors[7] = &g->cells[(i + 1) * g->cols + (j + 1)]; /*bottom right*/
                 }
             }
         }
     }
 }
-
 
 Cell* getNeighbours(Cell* c){
     /*returns the neighbours to this cell in the grid*/
@@ -200,6 +213,7 @@ int main(int argc, char* argv[]){
 
     //free resources for grid
     free(environment.cells);
+    free(environment.cellRects);
 
     CloseWindow();
 
